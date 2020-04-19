@@ -3,22 +3,24 @@ implicit none
 
 contains
 
-subroutine first_mode(ndim, gdim, flattensor, tvector, newflattensor)
-    integer, intent(in) :: ndim
-    integer, dimension(ndim), intent(in) :: gdim
-    real, dimension(:), intent(in) :: tvector
-    real, dimension(product(gdim)), intent(in) :: flattensor
-    real, dimension(:), intent(out) :: newflattensor
+function n_mode(mode, gdim, newsize, core, spp) result(tenprod)
+    integer, intent(in) :: mode
+    integer, intent(in) :: newsize
+    integer, dimension(:), intent(in) :: gdim
+    real, dimension(:), intent(in) :: spp 
+    real, dimension(product(gdim)), intent(in) :: core 
+    real, dimension(newsize) :: tenprod
+
     integer, dimension(2) :: newshape
-    integer :: mkappa, prod_kappa
 
-    mkappa = gdim(1) ! Assumed product by first mode
-    prod_kappa = product(gdim) / gdim(1)
-    newshape = (/mkappa, prod_kappa/)
+    if (gdim(mode) == 0) then
+        tenprod = dot_product(core, spp)
+    else
+        newshape = (/newsize, gdim(mode)/)
+        tenprod = matmul(reshape(core, newshape), spp)
+    end if
 
-    newflattensor = matmul(reshape(flattensor, newshape), tvector)
-
-end subroutine first_mode
+end function n_mode
 
     
 end module tensor_nmode 

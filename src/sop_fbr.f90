@@ -2,26 +2,30 @@ program sopfbr
   use tensor_nmode
   use chebval
   implicit none
-  integer :: i, j, k, jkappa, tkappa, mode, dims
+  integer :: i, j, k, jkappa, tkappa, mode, newsize, chebslice
   integer :: ndim = 3
   integer, dimension(3) :: gdim = (/5, 5, 5/)
   integer :: tdim = 4
   real, dimension(3) :: point
   real, dimension(15) :: u_vects
   real, dimension(60) :: coef_u_vects
-  real, dimension(125) :: flattensor
-  real, dimension(:), allocatable :: newflattensor_1
-  real, dimension(:), allocatable :: newflattensor_2
+  real, dimension(125) :: core ! Flattened version of the core tensor
+  real, dimension(:), allocatable :: tensor_holder
+  real, dimension(:), allocatable :: tensor_prod
   real :: serieval
 
   ! A test geometry
 
   point = (/-0.33, 0.15, 0.88/)
 
+  ! A test core tensor
+
+  core = 1.
+
   ! A test with unit tensor and Chebyshev series
 
   coef_u_vects = 1.0
-  flattensor = 1.0
+  core = 1.0
   u_vects = 0.0
 
   ! Initialize factor vectors
@@ -40,14 +44,28 @@ program sopfbr
      enddo
   enddo
 
-  dims = ndim
-  allocate(newflattensor_1(125))
+  ! Compute tensor n-mode product
+
+  allocate(tensor_holder(125))
+  tensor_holder = core
+
   do mode = 1, ndim
-     allocate(newflattensor_2(100))
-     call first_mode(dims, gdim(mode:), flattensor, u_vects, newflattensor)
-     dims = dims - 1
-     deallocate(newflattensor_1)
-     deallocate(newflattensor_2)
+
+     if (allocated(tensor_prod)) deallocate(tensor_prod)
+
+     newsize = product(gdim(mode:)) / gdim(mode)
+     chebslice = 5 * (mode - 1)
+     allocate(tensor_prod(newsize))
+
+     tensor_prod = n_mode(mode, gdim(mode:), newsize, &
+                   tensor_holder, u_vects(chebslice:(chebslice + 4)))
+
+     deallocate(tensor_holder)
+     allocate(tensor_holder(newsize))
+     tensor_holder = tensor_prod
+     
   enddo
+
+  print *, tensor_holder
 
 end program sopfbr
