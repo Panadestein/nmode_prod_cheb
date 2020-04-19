@@ -25,7 +25,6 @@ program sopfbr
   ! A test with unit tensor and Chebyshev series
 
   coef_u_vects = 1.0
-  core = 1.0
   u_vects = 0.0
 
   ! Initialize factor vectors
@@ -44,17 +43,17 @@ program sopfbr
      enddo
   enddo
 
-  ! Compute tensor n-mode product
+  ! Compute tensor n-mode product (final result contained in `tensor_prod`)
 
   allocate(tensor_holder(125))
   tensor_holder = core
+  chebslice = 1
 
   do mode = 1, ndim
 
      if (allocated(tensor_prod)) deallocate(tensor_prod)
 
      newsize = product(gdim(mode:)) / gdim(mode)
-     chebslice = 5 * (mode - 1)
      allocate(tensor_prod(newsize))
 
      tensor_prod = n_mode(mode, gdim(mode:), newsize, &
@@ -63,9 +62,14 @@ program sopfbr
      deallocate(tensor_holder)
      allocate(tensor_holder(newsize))
      tensor_holder = tensor_prod
+
+     chebslice = chebslice + 5
      
   enddo
 
-  print *, tensor_holder
+  deallocate(tensor_holder)
+
+  print *, tensor_prod
+
 
 end program sopfbr
